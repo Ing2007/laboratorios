@@ -3,57 +3,74 @@ package edu.umg;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
 
-public class ProductoDAO implements AutoCloseable {
+import java.util.ArrayList;
+import java.util.List;
 
-    private final MongoClient cliente;
-    private final MongoCollection<Document> productos;
+public class ProductoDAO {
+    private final MongoCollection<Document> coleccion;
 
     public ProductoDAO() {
-        cliente = ConexionMongo.conectar();
+        MongoClient cliente = ConexionMongo.conectar();
         MongoDatabase db = cliente.getDatabase("tienda");
-        productos = db.getCollection("productos");
+        this.coleccion = db.getCollection("productos");
     }
 
-    public void insertar(Producto producto) {
-        // TODO 1: construir un Document con los datos del producto.
-        // TODO 2: insertar el documento con insertOne().
-        throw new UnsupportedOperationException("Pendiente: insertar()");
+    // ACTIVIDAD 1: Insertar
+    public void insertar(Producto p) {
+        Document doc = new Document("codigo", p.getCodigo())
+                .append("nombre", p.getNombre())
+                .append("categoria", p.getCategoria())
+                .append("precio", p.getPrecio())
+                .append("existencia", p.getExistencia());
+        coleccion.insertOne(doc);
     }
 
-    public void listar() {
-        // TODO: recorrer productos.find() y mostrar los documentos.
-        throw new UnsupportedOperationException("Pendiente: listar()");
+    // ACTIVIDAD 2: Listar
+    public List<Document> listar() {
+        List<Document> lista = new ArrayList<>();
+        coleccion.find().into(lista);
+        return lista;
     }
 
+    // ACTIVIDAD 3: Buscar por Código
     public Document buscarPorCodigo(String codigo) {
-        // TODO: utilizar Filters.eq() y first().
-        throw new UnsupportedOperationException("Pendiente: buscarPorCodigo()");
+        return coleccion.find(Filters.eq("codigo", codigo)).first();
     }
 
-    public void actualizarExistencia(String codigo, int nuevaExistencia) {
-        // TODO: utilizar updateOne() y Updates.set().
-        throw new UnsupportedOperationException("Pendiente: actualizarExistencia()");
+    // ACTIVIDAD 4: Actualizar Existencia
+    public boolean actualizarExistencia(String codigo, int nuevaExistencia) {
+        var res = coleccion.updateOne(Filters.eq("codigo", codigo), Updates.set("existencia", nuevaExistencia));
+        return res.getModifiedCount() > 0;
     }
 
-    public void actualizarPrecio(String codigo, double nuevoPrecio) {
-        // TODO: actualizar el campo precio.
-        throw new UnsupportedOperationException("Pendiente: actualizarPrecio()");
+    // ACTIVIDAD 5: Actualizar Precio
+    public boolean actualizarPrecio(String codigo, double nuevoPrecio) {
+        var res = coleccion.updateOne(Filters.eq("codigo", codigo), Updates.set("precio", nuevoPrecio));
+        return res.getModifiedCount() > 0;
     }
 
-    public void eliminar(String codigo) {
-        // TODO: eliminar por código.
-        throw new UnsupportedOperationException("Pendiente: eliminar()");
+    // ACTIVIDAD 6: Eliminar
+    public boolean eliminar(String codigo) {
+        var res = coleccion.deleteOne(Filters.eq("codigo", codigo));
+        return res.getDeletedCount() > 0;
     }
 
-    public void listarPocoInventario(int limite) {
-        // TODO: mostrar productos con existencia menor al límite.
-        throw new UnsupportedOperationException("Pendiente: listarPocoInventario()");
+    // ACTIVIDAD 7: Poco Inventario
+    public List<Document> listarPocoInventario(int limite) {
+        List<Document> lista = new ArrayList<>();
+        coleccion.find(Filters.lt("existencia", limite)).into(lista);
+        return lista;
     }
 
-    @Override
-    public void close() {
-        cliente.close();
+    // RETO 1: Precio mayor a 500
+    public List<Document> listarPrecioMayorA500() {
+        List<Document> lista = new ArrayList<>();
+        coleccion.find(Filters.gt("precio", 500.0)).into(lista);
+        return lista;
     }
 }
+   
